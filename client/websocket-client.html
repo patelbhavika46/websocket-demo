@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-lg flex flex-col h-[70vh]">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">WebSocket Chat</h1>
+        
+        <!-- Chat Log -->
+        <div class="bg-gray-100 p-4 rounded-lg flex-1 overflow-y-scroll space-y-4 mb-4" id="chat-log">
+            <!-- Messages will be logged here -->
+            <p class="text-gray-500 text-center text-sm">Welcome to the chat!</p>
+        </div>
+
+        <!-- User Input -->
+        <div class="flex space-x-2 mb-4">
+            <input type="text" id="username-input" placeholder="Your Name" class="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors">
+        </div>
+        
+        <!-- Message Input and Send Button -->
+        <div class="flex space-x-2">
+            <input type="text" id="message-input" placeholder="Type a message..." class="flex-1 border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors">
+            <button id="send-btn" class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors">
+                Send
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const chatLog = document.getElementById('chat-log');
+        const usernameInput = document.getElementById('username-input');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        
+        let ws;
+
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) return;
+            
+            // The URL for your local WebSocket server
+            ws = new WebSocket('ws://localhost:8090');
+
+            ws.onopen = () => {
+                logMessage('You have joined the chat.', 'system');
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                logMessage(message.text, 'received', message.username);
+            };
+
+            ws.onclose = () => {
+                logMessage('You have been disconnected from the chat.', 'system');
+            };
+
+            ws.onerror = (error) => {
+                logMessage('An error occurred. See console for details.', 'system');
+                console.error('WebSocket Error:', error);
+            };
+        }
+
+        function logMessage(text, type, username = '') {
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('flex', 'flex-col');
+            
+            if (type === 'sent') {
+                messageContainer.classList.add('items-end');
+                messageContainer.innerHTML = `
+                    <p class="bg-indigo-500 text-white p-3 rounded-lg rounded-br-none max-w-[75%]">${text}</p>
+                    <span class="text-xs text-gray-500 mt-1">${username}</span>
+                `;
+            } else if (type === 'received') {
+                messageContainer.classList.add('items-start');
+                messageContainer.innerHTML = `
+                    <p class="bg-gray-200 text-gray-800 p-3 rounded-lg rounded-bl-none max-w-[75%]">${text}</p>
+                    <span class="text-xs text-gray-500 mt-1">${username}</span>
+                `;
+            } else {
+                messageContainer.classList.add('text-center');
+                messageContainer.innerHTML = `<p class="text-gray-500 italic">${text}</p>`;
+            }
+            
+            chatLog.appendChild(messageContainer);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function sendMessage() {
+            const username = usernameInput.value.trim() || 'Anonymous';
+            const message = messageInput.value.trim();
+
+            if (!message) return;
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const messageObject = { username, text: message };
+                ws.send(JSON.stringify(messageObject));
+                logMessage(message, 'sent', username);
+                messageInput.value = '';
+            } else {
+                logMessage('Not connected to the chat.', 'system');
+                connectWebSocket(); // Try to reconnect if disconnected
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Initial connection attempt
+        connectWebSocket();
+    </script>
+</body>
+</html>
