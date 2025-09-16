@@ -21,7 +21,7 @@ To run this application, you need to have the following installed on your machin
 ### Getting Started
 Follow these simple steps to get the chat application up and running.
 
-### Project Structure
+### 1. Project Structure
 Ensure your project files are organized as follows:
 
 ```
@@ -32,3 +32,27 @@ Ensure your project files are organized as follows:
 │   └── package.json
 └── client
     └── websocket-client.html
+```
+
+### 2. Install Dependencies
+Open your terminal and navigate to the server directory. Run the following command to install the required Node.js packages:
+``` bash
+npm install express ws
+```
+
+### 3. Run the Server
+From the server directory, execute the server file with the following command:
+
+```bash
+node index.js
+```
+You should see a message in your terminal confirming that the server is listening.
+
+### 4. Open the Client
+
+Open the websocket-client.html file in your web browser. You can open multiple tabs or use different browsers to simulate multiple users. Enter a username and start chatting!
+
+## Technology Stack
+- Backend: Node.js, Express.js, ws (WebSocket Library)
+
+- Frontend: HTML5, JavaScript, Tailwind CSS (for styling)
